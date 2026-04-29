@@ -120,20 +120,17 @@ const startSimulation = () => {
   // Run immediately once
   generateRandomReturn();
 
-  // Then loop every 8 to 15 seconds
+  // Then loop every 4 to 8 seconds for a smooth, one-by-one increase
   const loop = () => {
-    const delay = Math.floor(Math.random() * 7000) + 8000;
+    const delay = Math.floor(Math.random() * 4000) + 4000;
     setTimeout(async () => {
       try {
         // 2% chance of spawning a live fraud ring attack (very rare)
         if (Math.random() > 0.98) {
           await generateLiveFraudRing();
         } else {
-          // Generate a burst of 3 to 6 mostly legitimate returns
-          const burstSize = Math.floor(Math.random() * 4) + 3;
-          for (let i = 0; i < burstSize; i++) {
-            await generateRandomReturn();
-          }
+          // Generate exactly ONE legitimate return to make the dashboard tick up smoothly
+          await generateRandomReturn();
         }
       } catch (err) {
         console.error("Simulation error:", err);

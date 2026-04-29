@@ -83,25 +83,23 @@ const Dashboard = () => {
       <div className="kpi-grid">
         <GlassCard {...getCardProps(null)}>
           <div className="kpi-label">Total Returns Today</div>
-          <div className="kpi-value"><AnimatedNumber value={counts.total} /></div>
+          <div className="kpi-value">{counts.total.toLocaleString()}</div>
         </GlassCard>
         <GlassCard glowColor="var(--success)" {...getCardProps('auto_approved')}>
           <div className="kpi-label">Auto-Approved</div>
-          <div className="kpi-value text-success"><AnimatedNumber value={counts.auto_approved} /> <span className="kpi-sub">({Math.round((counts.auto_approved/(counts.total||1))*100)}%)</span></div>
+          <div className="kpi-value text-success">{counts.auto_approved.toLocaleString()} <span className="kpi-sub">({Math.round((counts.auto_approved/(counts.total||1))*100)}%)</span></div>
         </GlassCard>
         <GlassCard glowColor="var(--warning)" {...getCardProps('under_review')}>
           <div className="kpi-label">Under Review</div>
-          <div className="kpi-value text-warning"><AnimatedNumber value={counts.under_review} /> <span className="kpi-sub">({Math.round((counts.under_review/(counts.total||1))*100)}%)</span></div>
+          <div className="kpi-value text-warning">{counts.under_review.toLocaleString()} <span className="kpi-sub">({Math.round((counts.under_review/(counts.total||1))*100)}%)</span></div>
         </GlassCard>
         <GlassCard glowColor="var(--danger)" {...getCardProps('blocked')}>
           <div className="kpi-label">Blocked</div>
-          <div className="kpi-value text-danger"><AnimatedNumber value={counts.blocked} /> <span className="kpi-sub">({Math.round((counts.blocked/(counts.total||1))*100)}%)</span></div>
+          <div className="kpi-value text-danger">{counts.blocked.toLocaleString()} <span className="kpi-sub">({Math.round((counts.blocked/(counts.total||1))*100)}%)</span></div>
         </GlassCard>
         <GlassCard className="kpi-card kpi-highlight">
-          <div className="kpi-label">Fraud Prevented Today</div>
-          <div className="kpi-value highlight-value text-success">
-            <AnimatedNumber value={fraudPreventedValue} prefix="₹" />
-          </div>
+          <div className="kpi-label text-success">Fraud Prevented Today</div>
+          <div className="kpi-value text-success">₹{fraudPreventedValue.toLocaleString()}</div>
         </GlassCard>
       </div>
 
