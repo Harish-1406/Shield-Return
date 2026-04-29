@@ -1,0 +1,8 @@
+.glass-panel.clickable {
+  cursor: pointer;
+}
+
+.glass-panel:hover {
+  border-color: var(--custom-glow, var(--border-hover));
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 0 20px var(--custom-glow, rgba(45, 127, 249, 0.05));
+}

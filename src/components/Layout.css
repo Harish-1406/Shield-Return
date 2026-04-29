@@ -1,0 +1,16 @@
+.layout-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.main-content-wrapper {
+  flex: 1;
+  margin-left: 240px; /* Width of sidebar */
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  padding: 32px;
+  flex: 1;
+}

@@ -1,0 +1,35 @@
+.risk-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.badge-green {
+  background-color: rgba(82, 196, 26, 0.1);
+  color: var(--success);
+  border: 1px solid rgba(82, 196, 26, 0.2);
+}
+
+.badge-amber {
+  background-color: rgba(250, 173, 20, 0.1);
+  color: var(--warning);
+  border: 1px solid rgba(250, 173, 20, 0.2);
+}
+
+.badge-red {
+  background-color: rgba(255, 77, 79, 0.1);
+  color: var(--danger);
+  border: 1px solid rgba(255, 77, 79, 0.2);
+}
+
+.badge-gray {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}

@@ -1,0 +1,91 @@
+.analytics-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.analytics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.chart-container {
+  padding: 24px;
+}
+
+.insights-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.stats-box {
+  padding: 24px;
+}
+
+.insight-card {
+  padding: 16px;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--text-secondary);
+  border-left: 3px solid var(--primary);
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--primary);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+@media print {
+  body {
+    background: #fff;
+    color: #000;
+  }
+  .sidebar, .topbar, .btn-primary {
+    display: none !important;
+  }
+  .main-content-wrapper {
+    margin-left: 0 !important;
+  }
+  .glass-panel {
+    border: 1px solid #ccc;
+    background: #fff;
+    color: #000;
+    page-break-inside: avoid;
+  }
+  * {
+    color: #000 !important;
+  }
+}
+
+/* Utilities used in Analytics */
+.mb-6 { margin-bottom: 24px; }
+.mb-4 { margin-bottom: 16px; }
+.pb-2 { padding-bottom: 8px; }
+.border-b { border-bottom-width: 1px; border-bottom-style: solid; }
+.block { display: block; }
+.text-xs { font-size: 12px; }
+.bg-white\/10 { background-color: rgba(255, 255, 255, 0.1); }
+.px-2 { padding-left: 8px; padding-right: 8px; }
+.py-1 { padding-top: 4px; padding-bottom: 4px; }
+.space-y-4 > * + * { margin-top: 16px; }
+.space-y-3 > * + * { margin-top: 12px; }
