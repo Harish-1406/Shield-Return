@@ -1,4 +1,4 @@
-process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
+process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8200";
 const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 

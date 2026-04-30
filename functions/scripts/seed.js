@@ -1,4 +1,4 @@
-process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
+process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8200";
 const admin = require("firebase-admin");
 const { FieldValue } = require("firebase-admin/firestore");
 
@@ -69,28 +69,48 @@ const seedData = async () => {
     });
   }
 
-  // 3. 6 returns — Fraud Ring (FR-2026-003) - Shared Device and IP
-  for (let i = 1; i <= 6; i++) {
-    allReturns.push({
-      customerId: `ring3_cust_${i}`,
-      customerName: `Ghost User ${i}`,
-      product: "Sony WH-1000XM5",
-      value: 29900,
-      reason: "Defective",
-      purchaseDate: "2026-04-12",
-      returnDate: "2026-04-18",
-      accountAgeDays: 5,
-      returnRate: 0.9,
-      deviceId: "device-desktop-fraud-333", // shared device
-      ipAddress: "103.44.11.99", // shared IP
-      ipRegion: "Bengaluru, IN",
-      paymentLast4: `${8000 + i}`,
-      shippingAddress: `${i} Tech Park`,
-      shippingLat: 12.9716 + (i * 0.05), // Spread out geographically
-      shippingLng: 77.5946 + (i * 0.05),
-      category: "electronics"
-    });
-  }
+  // 3. 5 returns — Demo Ring (FR-2026-003) - Carefully crafted to show all 4 connection types exactly
+  // Node 1
+  allReturns.push({
+    customerId: "ring3_cust_1", customerName: "Alice User", product: "iPhone 15 Pro", value: 134900,
+    reason: "Defective", purchaseDate: "2026-04-12", returnDate: "2026-04-15", accountAgeDays: 5, returnRate: 0.8,
+    deviceId: "device-ALPHA", paymentLast4: "1111", ipAddress: "1.1.1.1", ipRegion: "NY",
+    shippingAddress: "100 NY St", shippingLat: 40.7128, shippingLng: -74.0060, category: "electronics"
+  });
+  // Node 2 (Connects to Node 1 via DEVICE - RED LINE)
+  allReturns.push({
+    customerId: "ring3_cust_2", customerName: "Bob Scammer", product: "MacBook Air", value: 114900,
+    reason: "Item not received", purchaseDate: "2026-04-13", returnDate: "2026-04-16", accountAgeDays: 2, returnRate: 1.0,
+    deviceId: "device-ALPHA", // MATCHES NODE 1
+    paymentLast4: "2222", ipAddress: "2.2.2.2", ipRegion: "LA",
+    shippingAddress: "200 LA St", shippingLat: 34.0522, shippingLng: -118.2437, category: "electronics"
+  });
+  // Node 3 (Connects to Node 2 via PAYMENT - ORANGE LINE)
+  allReturns.push({
+    customerId: "ring3_cust_3", customerName: "Charlie Fake", product: "Nike Air Max", value: 12500,
+    reason: "Wrong size", purchaseDate: "2026-04-14", returnDate: "2026-04-17", accountAgeDays: 1, returnRate: 0.9,
+    deviceId: "device-CHARLIE", 
+    paymentLast4: "2222", // MATCHES NODE 2
+    ipAddress: "3.3.3.3", ipRegion: "TX",
+    shippingAddress: "300 TX St", shippingLat: 29.7604, shippingLng: -95.3698, category: "apparel"
+  });
+  // Node 4 (Connects to Node 3 via ADDRESS - YELLOW DASHED LINE)
+  allReturns.push({
+    customerId: "ring3_cust_4", customerName: "David Ghost", product: "Zara Dress", value: 4500,
+    reason: "Does not fit", purchaseDate: "2026-04-15", returnDate: "2026-04-18", accountAgeDays: 4, returnRate: 0.6,
+    deviceId: "device-DAVID", paymentLast4: "4444", ipAddress: "4.4.4.4", ipRegion: "TX",
+    shippingAddress: "300 TX St Suite B", 
+    shippingLat: 29.7605, shippingLng: -95.3698, // MATCHES NODE 3 PROXIMITY (<1km)
+    category: "apparel"
+  });
+  // Node 5 (Connects to Node 4 via PRODUCT - GRAY DASHED LINE)
+  allReturns.push({
+    customerId: "ring3_cust_5", customerName: "Eve Fraud", 
+    product: "Zara Dress", // MATCHES NODE 4
+    value: 4500, reason: "Changed my mind", purchaseDate: "2026-04-16", returnDate: "2026-04-19", accountAgeDays: 8, returnRate: 0.5,
+    deviceId: "device-EVE", paymentLast4: "5555", ipAddress: "5.5.5.5", ipRegion: "FL",
+    shippingAddress: "500 FL St", shippingLat: 25.7617, shippingLng: -80.1918, category: "apparel"
+  });
 
   // 4. 4 returns — Fraud Ring (FR-2026-004) - Shared Payment and Nearby Address
   for (let i = 1; i <= 4; i++) {
@@ -223,7 +243,25 @@ const seedData = async () => {
     await new Promise(r => setTimeout(r, 500));
   }
 
-  console.log("Seeding complete! Check your emulator UI at localhost:4000");
+  // Explicitly create the Demo Ring (FR-2026-DEMO)
+  // Our demo ring is the 3rd ring, which corresponds to indices 13 to 17 in allReturns.
+  // Their IDs will be 10014, 10015, 10016, 10017, 10018
+  const demoRingMembers = ["10014", "10015", "10016", "10017", "10018"];
+  const demoRingValue = 134900 + 114900 + 12500 + 4500 + 4500;
+  await db.collection("fraudRings").doc("FR-2026-DEMO").set({
+    ringId: "FR-2026-DEMO",
+    detectedAt: FieldValue.serverTimestamp(),
+    memberReturnIds: demoRingMembers,
+    totalValue: demoRingValue,
+    connectionTypes: ["device", "payment", "address", "product"],
+    status: "active",
+    strongSignals: ["auto_detected_network"],
+    mediumSignals: [],
+    weakSignals: []
+  });
+  console.log("Created FR-2026-DEMO with explicit visual topologies.");
+
+  console.log("Seeding complete! Check your emulator UI at localhost:5173");
   process.exit(0);
 };
 

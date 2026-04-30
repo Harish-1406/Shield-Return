@@ -9,15 +9,17 @@ const NetworkGraph = ({ nodes, links }) => {
   useEffect(() => {
     if (!nodes || !links || nodes.length === 0 || !svgRef.current || !containerRef.current) return;
 
-    const width = containerRef.current.clientWidth;
-    const height = containerRef.current.clientHeight;
+    let width = containerRef.current.clientWidth || 600;
+    let height = containerRef.current.clientHeight || 350;
 
-    // Clear previous graph
-    d3.select(svgRef.current).selectAll("*").remove();
+    const renderGraph = () => {
+      // Clear previous graph
+      d3.select(svgRef.current).selectAll("*").remove();
 
-    const svg = d3.select(svgRef.current)
-      .attr("width", width)
-      .attr("height", height);
+      const svg = d3.select(svgRef.current)
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", [0, 0, width, height]);
 
     // Add zoom capabilities
     const zoom = d3.zoom()
@@ -32,10 +34,10 @@ const NetworkGraph = ({ nodes, links }) => {
 
     // Force simulation
     const simulation = d3.forceSimulation(nodes)
-      .force("link", d3.forceLink(links).id(d => d.id).distance(120))
-      .force("charge", d3.forceManyBody().strength(-200))
+      .force("link", d3.forceLink(links).id(d => d.id).distance(150))
+      .force("charge", d3.forceManyBody().strength(-500))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collide", d3.forceCollide().radius(d => Math.max(15, Math.min(35, Math.sqrt(d.value || 0) / 1.5 + 5))));
+      .force("collide", d3.forceCollide().radius(d => Math.max(10, Math.min(30, Math.sqrt(d.value || 0) / 1.5)) + 20).strength(0.8).iterations(2));
 
     // Tooltip setup
     const tooltip = d3.select(containerRef.current)
@@ -43,11 +45,26 @@ const NetworkGraph = ({ nodes, links }) => {
       .attr("class", "graph-tooltip")
       .style("opacity", 0);
 
+    // Preprocess links for curves
+    links.forEach(l => {
+      const sourceId = typeof l.source === 'object' ? l.source.id : l.source;
+      const targetId = typeof l.target === 'object' ? l.target.id : l.target;
+      const key = sourceId < targetId ? `${sourceId}-${targetId}` : `${targetId}-${sourceId}`;
+      l.pairKey = key;
+    });
+    const linkCounts = {};
+    links.forEach(l => {
+      if (!linkCounts[l.pairKey]) linkCounts[l.pairKey] = 0;
+      l.linkIndex = linkCounts[l.pairKey]++;
+    });
+    links.forEach(l => l.totalLinks = linkCounts[l.pairKey]);
+
     // Links
     const link = g.append("g")
-      .selectAll("line")
+      .selectAll("path")
       .data(links)
-      .join("line")
+      .join("path")
+      .attr("fill", "none")
       .attr("stroke-width", d => {
         if (d.type === 'device') return 4;
         if (d.type === 'payment' || d.type === 'ip') return 2;
@@ -118,11 +135,21 @@ const NetworkGraph = ({ nodes, links }) => {
       .style("text-shadow", "0px 1px 3px rgba(0,0,0,0.8)");
 
     simulation.on("tick", () => {
-      link
-        .attr("x1", d => d.source.x)
-        .attr("y1", d => d.source.y)
-        .attr("x2", d => d.target.x)
-        .attr("y2", d => d.target.y);
+      link.attr("d", d => {
+        const dx = d.target.x - d.source.x;
+        const dy = d.target.y - d.source.y;
+        const dr = Math.sqrt(dx * dx + dy * dy);
+        
+        if (d.totalLinks === 1) {
+          return `M${d.source.x},${d.source.y}L${d.target.x},${d.target.y}`;
+        }
+        
+        // Curve them away from each other
+        const sweep = d.linkIndex % 2 === 0 ? 1 : 0;
+        const curveDr = dr * (0.8 + Math.floor(d.linkIndex / 2) * 0.4);
+        
+        return `M${d.source.x},${d.source.y}A${curveDr},${curveDr} 0 0,${sweep} ${d.target.x},${d.target.y}`;
+      });
 
       node
         .attr("cx", d => Math.max(20, Math.min(width - 20, d.x)))
@@ -154,9 +181,25 @@ const NetworkGraph = ({ nodes, links }) => {
         .on("drag", dragged)
         .on("end", dragended);
     }
+    }; // end renderGraph
+
+    // Initial render
+    renderGraph();
+
+    // Resize observer
+    const resizeObserver = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        if (entry.contentRect.width > 0 && entry.contentRect.height > 0) {
+          width = entry.contentRect.width;
+          height = entry.contentRect.height;
+          renderGraph();
+        }
+      }
+    });
+    resizeObserver.observe(containerRef.current);
 
     return () => {
-      simulation.stop();
+      resizeObserver.disconnect();
       d3.select(containerRef.current).selectAll(".graph-tooltip").remove();
     };
   }, [nodes, links]);

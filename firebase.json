@@ -14,15 +14,24 @@
     "indexes": "firestore.indexes.json"
   },
   "emulators": {
-    "functions": {
-      "port": 5001
-    },
-    "firestore": {
-      "port": 8080
-    },
     "ui": {
       "enabled": true,
-      "port": 4000
+      "port": 4100
+    },
+    "functions": {
+      "port": 5100
+    },
+    "firestore": {
+      "port": 8200
+    },
+    "auth": {
+      "port": 9200
+    },
+    "eventarc": {
+      "port": 9300
+    },
+    "tasks": {
+      "port": 9500
     },
     "singleProjectMode": true
   }

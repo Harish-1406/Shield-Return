@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { collection, query, getDocs } from 'firebase/firestore';
+import { collection, query, getDocs, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import GlassCard from '../components/GlassCard';
 import NetworkGraph from '../components/NetworkGraph';
@@ -36,31 +36,33 @@ const Rings = () => {
   const [selectedRing, setSelectedRing] = useState(null);
   const [graphData, setGraphData] = useState({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
+  const [loadingGraph, setLoadingGraph] = useState(false);
 
   useEffect(() => {
-    const fetchRings = async () => {
-      const q = query(collection(db, "fraudRings"));
-      const snapshot = await getDocs(q);
+    const q = query(collection(db, "fraudRings"), orderBy("detectedAt", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setRings(data);
-      if (data.length > 0) {
+      if (data.length > 0 && !selectedRing) {
         setSelectedRing(data[0]);
       }
       setLoading(false);
-    };
-    fetchRings();
-  }, []);
+    });
+    return () => unsubscribe();
+  }, [selectedRing]);
 
   useEffect(() => {
-    if (!selectedRing) return;
+    if (!selectedRing || !selectedRing.memberReturnIds || selectedRing.memberReturnIds.length === 0) {
+      setGraphData({ nodes: [], links: [] });
+      setLoadingGraph(false);
+      return;
+    }
 
-    const fetchGraphData = async () => {
-      // For the prototype, we fetch all returns in the ring
-      // In a real app, we might just query the specific returns
-      const q = query(collection(db, "returns"));
-      const snapshot = await getDocs(q);
+    setLoadingGraph(true);
+    
+    // Listen to the specific returns in real-time
+    const unsubscribe = onSnapshot(collection(db, "returns"), (snapshot) => {
       const allReturns = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
       const members = allReturns.filter(r => selectedRing.memberReturnIds.includes(r.id));
       
       const nodes = members.map(m => ({
@@ -87,16 +89,16 @@ const Rings = () => {
           } else if (a.shippingLat && b.shippingLat && getDistanceFromLatLonInKm(a.shippingLat, a.shippingLng, b.shippingLat, b.shippingLng) <= 1.0) {
             links.push({ source: a.id, target: b.id, type: 'address' });
           } else if (a.product === b.product) {
-            // weak connection just for visual if no strong ones exist
             links.push({ source: a.id, target: b.id, type: 'product' });
           }
         }
       }
 
       setGraphData({ nodes, links });
-    };
+      setLoadingGraph(false);
+    });
 
-    fetchGraphData();
+    return () => unsubscribe();
   }, [selectedRing]);
 
   if (loading) return <div className="p-8 text-center text-secondary">Loading intel...</div>;
@@ -149,8 +151,10 @@ const Rings = () => {
                 <span className="flex items-center gap-2"><span className="legend-line line-gray"></span> Product</span>
               </div>
             </div>
-            <div className="graph-wrapper">
-              {graphData.nodes.length > 0 ? (
+            <div className="graph-wrapper" style={{ minHeight: '350px' }}>
+              {loadingGraph ? (
+                <div className="text-center p-8 text-secondary">Loading network intel...</div>
+              ) : graphData.nodes.length > 0 ? (
                 <NetworkGraph nodes={graphData.nodes} links={graphData.links} />
               ) : (
                 <div className="text-center p-8 text-secondary">Select a ring to view its network.</div>
